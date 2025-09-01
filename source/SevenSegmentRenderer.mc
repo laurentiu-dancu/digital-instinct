@@ -1,83 +1,198 @@
 using Toybox.Graphics;
 using Toybox.Lang;
 
-// Helper class for rendering 7-segment displays with dithering support
+// Utility class for rendering 7-segment displays with advanced features
 class SevenSegmentRenderer {
 
-    // Create dithered pattern for unlit segments
-    static function drawDitheredRect(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, width as Lang.Number, height as Lang.Number) as Void {
+    // Create a smooth dithered pattern for unlit segments
+    static function drawDitheredRect(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, width as Lang.Number, height as Lang.Number, pattern as Lang.Number) as Void {
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
         
-        // 50% dithered pattern for light gray appearance
+        // Different dithering patterns for variety
+        var ditherPattern = pattern % 3;
+        
         for (var px = x; px < x + width; px++) {
             for (var py = y; py < y + height; py++) {
-                // Checkerboard pattern every other pixel
-                if ((px + py) % 3 == 0) {
+                var shouldDraw = false;
+                
+                switch (ditherPattern) {
+                    case 0: // Checkerboard
+                        shouldDraw = ((px + py) % 3 == 0);
+                        break;
+                    case 1: // Diagonal stripes
+                        shouldDraw = ((px + py) % 4 == 0);
+                        break;
+                    case 2: // Sparse dots
+                        shouldDraw = ((px * py) % 5 == 0);
+                        break;
+                }
+                
+                if (shouldDraw) {
                     dc.drawPoint(px, py);
                 }
             }
         }
     }
 
-    // Draw a single segment with proper thickness and rounded ends
-    static function drawSegmentShape(dc as Graphics.Dc, x1 as Lang.Number, y1 as Lang.Number, x2 as Lang.Number, y2 as Lang.Number, thickness as Lang.Number, isActive as Lang.Boolean) as Void {
+    // Draw a rounded segment with proper anti-aliasing simulation
+    static function drawRoundedSegment(dc as Graphics.Dc, x1 as Lang.Number, y1 as Lang.Number, x2 as Lang.Number, y2 as Lang.Number, thickness as Lang.Number, isActive as Lang.Boolean, ditherPattern as Lang.Number) as Void {
         if (isActive) {
             dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
             if (x1 == x2) {
-                // Vertical segment
-                dc.fillRectangle(x1 - thickness/2, y1, thickness, y2 - y1);
+                // Vertical segment with rounded ends
+                var halfThickness = thickness / 2;
+                dc.fillRectangle(x1 - halfThickness, y1 + halfThickness, thickness, y2 - y1 - thickness);
+                // Rounded ends
+                dc.fillCircle(x1, y1 + halfThickness, halfThickness);
+                dc.fillCircle(x1, y2 - halfThickness, halfThickness);
             } else {
-                // Horizontal segment
-                dc.fillRectangle(x1, y1 - thickness/2, x2 - x1, thickness);
+                // Horizontal segment with rounded ends
+                var halfThickness = thickness / 2;
+                dc.fillRectangle(x1 + halfThickness, y1 - halfThickness, x2 - x1 - thickness, thickness);
+                // Rounded ends
+                dc.fillCircle(x1 + halfThickness, y1, halfThickness);
+                dc.fillCircle(x2 - halfThickness, y1, halfThickness);
             }
         } else {
             // Draw dithered background
             if (x1 == x2) {
                 // Vertical segment
-                drawDitheredRect(dc, x1 - thickness/2, y1, thickness, y2 - y1);
+                var halfThickness = thickness / 2;
+                drawDitheredRect(dc, x1 - halfThickness, y1 + halfThickness, thickness, y2 - y1 - thickness, ditherPattern);
+                // Rounded ends
+                drawDitheredCircle(dc, x1, y1 + halfThickness, halfThickness, ditherPattern);
+                drawDitheredCircle(dc, x1, y2 - halfThickness, halfThickness, ditherPattern);
             } else {
                 // Horizontal segment
-                drawDitheredRect(dc, x1, y1 - thickness/2, x2 - x1, thickness);
+                var halfThickness = thickness / 2;
+                drawDitheredRect(dc, x1 + halfThickness, y1 - halfThickness, x2 - x1 - thickness, thickness, ditherPattern);
+                // Rounded ends
+                drawDitheredCircle(dc, x1 + halfThickness, y1, halfThickness, ditherPattern);
+                drawDitheredCircle(dc, x2 - halfThickness, y1, halfThickness, ditherPattern);
             }
         }
     }
 
-    // Calculate and draw complete 7-segment digit
-    static function renderDigit(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, width as Lang.Number, height as Lang.Number, digit as Lang.Number, showBackground as Lang.Boolean, segmentMap as Lang.Dictionary<Lang.Number, Lang.Array<Lang.Boolean>>) as Void {
-        var segments = segmentMap[digit];
-        var thickness = width > 20 ? 4 : 2;
-        var gap = 2;
+    // Draw a dithered circle for rounded segment ends
+    static function drawDitheredCircle(dc as Graphics.Dc, centerX as Lang.Number, centerY as Lang.Number, radius as Lang.Number, pattern as Lang.Number) as Void {
+        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
         
-        var left = x;
-        var right = x + width;
-        var top = y;
-        var middle = y + height / 2;
-        var bottom = y + height;
+        var ditherPattern = pattern % 3;
         
-        // Draw each segment
-        var segmentDefs = [
-            // a: top horizontal
-            [left + gap, top, right - gap, top],
-            // b: top right vertical  
-            [right, top + gap, right, middle - gap],
-            // c: bottom right vertical
-            [right, middle + gap, right, bottom - gap],
-            // d: bottom horizontal
-            [left + gap, bottom, right - gap, bottom],
-            // e: bottom left vertical
-            [left, middle + gap, left, bottom - gap],
-            // f: top left vertical
-            [left, top + gap, left, middle - gap],
-            // g: middle horizontal
-            [left + gap, middle, right - gap, middle]
+        // Simplified circle drawing using square approximation
+        for (var x = centerX - radius; x <= centerX + radius; x++) {
+            for (var y = centerY - radius; y <= centerY + radius; y++) {
+                // Simple distance check using square approximation
+                var dx = x - centerX;
+                var dy = y - centerY;
+                if (dx * dx + dy * dy <= radius * radius) {
+                    var shouldDraw = false;
+                    
+                    switch (ditherPattern) {
+                        case 0: // Checkerboard
+                            shouldDraw = ((x + y) % 3 == 0);
+                            break;
+                        case 1: // Radial pattern
+                            shouldDraw = ((dx + dy + x + y) % 4 == 0);
+                            break;
+                        case 2: // Sparse dots
+                            shouldDraw = ((x * y) % 5 == 0);
+                            break;
+                    }
+                    
+                    if (shouldDraw) {
+                        dc.drawPoint(x, y);
+                    }
+                }
+            }
+        }
+    }
+
+    // Calculate optimal segment thickness based on digit size
+    static function calculateOptimalThickness(width as Lang.Number, height as Lang.Number) as Lang.Number {
+        var minDimension = width < height ? width : height;
+        if (minDimension >= 50) {
+            return 6; // Large digits
+        } else if (minDimension >= 30) {
+            return 4; // Medium digits
+        } else if (minDimension >= 20) {
+            return 3; // Small digits
+        } else {
+            return 2; // Mini digits
+        }
+    }
+
+    // Calculate optimal gap between segments
+    static function calculateOptimalGap(width as Lang.Number, height as Lang.Number) as Lang.Number {
+        var minDimension = width < height ? width : height;
+        if (minDimension >= 2) {
+            return 4; // Large digits
+        } else if (minDimension >= 30) {
+            return 3; // Medium digits
+        } else if (minDimension >= 20) {
+            return 2; // Small digits
+        } else {
+            return 1; // Mini digits
+        }
+    }
+
+    // Generate segment coordinates with proper spacing
+    static function generateSegmentCoordinates(x as Lang.Number, y as Lang.Number, width as Lang.Number, height as Lang.Number, thickness as Lang.Number, gap as Lang.Number) as Lang.Array<Lang.Array<Lang.Number>> {
+        var halfWidth = width / 2;
+        var halfHeight = height / 2;
+        var midY = y + halfHeight;
+        
+        return [
+            // Segment a (top horizontal)
+            [x + gap, y, x + width - gap, y + thickness],
+            // Segment b (top right vertical)
+            [x + width - thickness, y + gap, x + width, midY - gap],
+            // Segment c (bottom right vertical)
+            [x + width - thickness, midY + gap, x + width, y + height - gap],
+            // Segment d (bottom horizontal)
+            [x + gap, y + height - thickness, x + width - gap, y + height],
+            // Segment e (bottom left vertical)
+            [x, midY + gap, x + thickness, y + height - gap],
+            // Segment f (top left vertical)
+            [x, y + gap, x + thickness, midY - gap],
+            // Segment g (middle horizontal)
+            [x + gap, midY - thickness/2, x + width - gap, midY + thickness/2]
         ];
+    }
+
+    // Render a complete 7-segment digit with all features
+    static function renderDigit(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, width as Lang.Number, height as Lang.Number, digit as Lang.Number, segmentMap as Lang.Dictionary<Lang.Number, Lang.Array<Lang.Number>>, showBackground as Lang.Boolean, useRoundedSegments as Lang.Boolean) as Void {
+        var segments = segmentMap[digit];
+        if (segments == null) {
+            return;
+        }
         
+        var thickness = calculateOptimalThickness(width, height);
+        var gap = calculateOptimalGap(width, height);
+        var coords = generateSegmentCoordinates(x, y, width, height, thickness, gap);
+        
+        // Draw background segments first if requested
+        if (showBackground) {
+            for (var i = 0; i < 7; i++) {
+                if (segments[i] == 0) {
+                    if (useRoundedSegments) {
+                        drawRoundedSegment(dc, coords[i][0], coords[i][1], coords[i][2], coords[i][3], thickness, false, i);
+                    } else {
+                        drawDitheredRect(dc, coords[i][0], coords[i][1], coords[i][2] - coords[i][0], coords[i][3] - coords[i][1], i);
+                    }
+                }
+            }
+        }
+        
+        // Draw active segments
         for (var i = 0; i < 7; i++) {
-            var isActive = segments != null && segments[i];
-            var coords = segmentDefs[i];
-            
-            if (showBackground || isActive) {
-                drawSegmentShape(dc, coords[0], coords[1], coords[2], coords[3], thickness, isActive);
+            if (segments[i] == 1) {
+                if (useRoundedSegments) {
+                    drawRoundedSegment(dc, coords[i][0], coords[i][1], coords[i][2], coords[i][3], thickness, true, i);
+                } else {
+                    dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
+                    dc.fillRectangle(coords[i][0], coords[i][1], coords[i][2] - coords[i][0], coords[i][3] - coords[i][1]);
+                }
             }
         }
     }
