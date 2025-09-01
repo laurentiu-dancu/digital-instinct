@@ -266,7 +266,7 @@ class SevenSegView extends WatchUi.WatchFace {
         };
         
         var pattern = patterns.get(char);
-        if (pattern != null) {
+        if (pattern != null && pattern.size() > 0) {
             drawMiniSevenSeg(dc, x, y, width, height, pattern[0]);
         }
     }

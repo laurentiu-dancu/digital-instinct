@@ -15,7 +15,7 @@ class SevenSegApp extends Application.AppBase {
     }
 
     function getInitialView() as Lang.Array<WatchUi.Views or WatchUi.InputDelegates>? {
-        return [ new SevenSegView() ] as Lang.Array<WatchUi.Views or WatchUi.InputDelegates>;
+        return [ new SevenSegView() ];
     }
 
 }
