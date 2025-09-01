@@ -72,9 +72,6 @@ class SevenSegView extends WatchUi.WatchFace {
         // Draw heart rate (top right)
         drawHeartRate(dc);
         
-        // Draw battery indicator (bottom)
-        drawBatteryIndicator(dc);
-        
         _lastUpdateTime = System.getClockTime().min;
     }
 
@@ -92,15 +89,15 @@ class SevenSegView extends WatchUi.WatchFace {
         var centerY = dc.getHeight() / 2;
         
         // Time digit positions - optimized for 176x176 display, avoiding circular overlay
-        var digitWidth = 32;
-        var digitHeight = 48;
-        var digitSpacing = 36;
-        var colonWidth = 10;
+        var digitWidth = 38; // Bigger digits
+        var digitHeight = 56; // Bigger height
+        var digitSpacing = 40; // Slightly more spacing
+        var colonWidth = 12; // Bigger colon
         
-        // Calculate positions for HH:MM - shifted further right to make first digit fully visible
+        // Calculate positions for HH:MM - final positioning
         var totalWidth = digitWidth * 4 + colonWidth + digitSpacing * 3;
-        var startX = centerX - totalWidth / 2 + 35; // Shift further right to make first digit fully visible
-        var timeY = centerY - digitHeight / 2;
+        var startX = centerX - totalWidth / 2 + 57; // Final position: 2px more to the right
+        var timeY = centerY - digitHeight / 2 + 25; // Moved down more
         
         // Draw hour digits
         var hourTens = hour / 10;
@@ -122,20 +119,20 @@ class SevenSegView extends WatchUi.WatchFace {
     private function drawDate(dc as Graphics.Dc, day as Lang.Number, monthIndex as Lang.Number) as Void {
         var dateX = 15;
         var dateY = 25;
-        var smallDigitWidth = 16;
-        var smallDigitHeight = 24;
-        var spacing = 18;
+        var smallDigitWidth = 16; // Uniform digit width
+        var smallDigitHeight = 22; // Uniform digit height
+        var spacing = 16; // Reduced spacing to avoid circle overlap
         
         // Draw day (DD) - ensure we have valid numbers
         var dayTens = day / 10;
         var dayOnes = day % 10;
         
-        // Debug: Draw day values directly
-        drawSevenSegmentDigit(dc, dateX, dateY, smallDigitWidth, smallDigitHeight, dayTens, false);
-        drawSevenSegmentDigit(dc, dateX + spacing, dateY, smallDigitWidth, smallDigitHeight, dayOnes, false);
+        // Debug: Draw day values directly with dithering on unlit segments
+        drawSevenSegmentDigit(dc, dateX, dateY, smallDigitWidth, smallDigitHeight, dayTens, true);
+        drawSevenSegmentDigit(dc, dateX + spacing, dateY, smallDigitWidth, smallDigitHeight, dayOnes, true);
         
-        // Draw month text using proper 7-segment patterns
-        var monthX = dateX + spacing * 2 + 6;
+        // Draw month text using proper 7-segment patterns - same size as digits
+        var monthX = dateX + spacing * 2 + 6; // Reduced spacing to avoid circle overlap
         // Month index is 1-based (1=January), convert to 0-based for array
         var monthArrayIndex = monthIndex - 1;
         drawMonthText(dc, monthX, dateY, monthArrayIndex);
@@ -158,18 +155,18 @@ class SevenSegView extends WatchUi.WatchFace {
             heartRate = 0;
         }
         
-        // Position in top right corner - adjusted to fit in circular area
-        var hrX = dc.getWidth() - 45;
-        var hrY = 25;
+        // Position in top right corner - better centered in circular area
+        var hrX = dc.getWidth() - 50;
+        var hrY = 20;
         
         // Always draw heart rate display (even if 0)
         drawHeartRateDigits(dc, hrX, hrY, heartRate);
     }
 
     private function drawHeartRateDigits(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, hr as Lang.Number) as Void {
-        var digitWidth = 14;
-        var digitHeight = 22;
-        var spacing = 16;
+        var digitWidth = 18; // Larger digits for heart rate
+        var digitHeight = 28; // Larger height
+        var spacing = 20; // More spacing between digits
         
         // Convert heart rate to digits
         var hrStr = hr.toString();
@@ -192,9 +189,7 @@ class SevenSegView extends WatchUi.WatchFace {
             drawSevenSegmentDigit(dc, x + spacing * 2, y, digitWidth, digitHeight, ones, false);
         }
         
-        // Draw "BPM" label
-        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
-        dc.drawText(x + 25, y + digitHeight + 5, Graphics.FONT_TINY, "BPM", Graphics.TEXT_JUSTIFY_LEFT);
+        // BPM label removed for cleaner look
     }
 
     private function drawBatteryIndicator(dc as Graphics.Dc) as Void {
@@ -235,7 +230,7 @@ class SevenSegView extends WatchUi.WatchFace {
         }
         
         // Simple, direct 7-segment drawing
-        var thickness = width > 20 ? 4 : 2;
+        var thickness = width > 20 ? 5 : 3; // Slightly thicker for better readability
         var gap = width > 20 ? 2 : 1;
         
         // Calculate segment positions directly
@@ -297,9 +292,7 @@ class SevenSegView extends WatchUi.WatchFace {
             drawDitheredRect(dc, left, midY - thickness/2, right - left, thickness);
         }
         
-        // Debug: Draw a simple rectangle around the digit area to see boundaries
-        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
-        dc.drawRectangle(x, y, width, height);
+        // Debug bounding boxes removed for production
     }
 
     private function calculateSegmentCoords(x as Lang.Number, y as Lang.Number, width as Lang.Number, height as Lang.Number, thickness as Lang.Number, gap as Lang.Number) as Lang.Array<Lang.Array<Lang.Number>> {
@@ -355,13 +348,13 @@ class SevenSegView extends WatchUi.WatchFace {
 
     private function drawColon(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, height as Lang.Number) as Void {
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
-        var dotSize = 4;
+        var dotSize = 6; // Slightly larger dots
         var quarterHeight = height / 4;
         
-        // Upper dot
-        dc.fillRectangle(x, y + quarterHeight, dotSize, dotSize);
-        // Lower dot
-        dc.fillRectangle(x, y + height - quarterHeight - dotSize, dotSize, dotSize);
+        // Upper dot - more centered
+        dc.fillRectangle(x, y + quarterHeight - dotSize/2, dotSize, dotSize);
+        // Lower dot - more centered
+        dc.fillRectangle(x, y + height - quarterHeight - dotSize/2, dotSize, dotSize);
     }
 
     private function drawMonthText(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, monthIndex as Lang.Number) as Void {
@@ -375,10 +368,10 @@ class SevenSegView extends WatchUi.WatchFace {
             return;
         }
         
-        // Draw month using proper 7-segment patterns
-        var charWidth = 12;
-        var charHeight = 18;
-        var charSpacing = 14;
+        // Draw month using proper 7-segment patterns - uniform size with date digits
+        var charWidth = 16; // Same as date digits
+        var charHeight = 22; // Same as date digits
+        var charSpacing = 16; // Same spacing as date digits
         
         for (var i = 0; i < monthStr.length(); i++) {
             var char = monthStr.substring(i, i + 1);
@@ -421,7 +414,7 @@ class SevenSegView extends WatchUi.WatchFace {
     }
 
     private function drawMiniSevenSeg(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, width as Lang.Number, height as Lang.Number, segments as Lang.Array<Lang.Number>) as Void {
-        var thickness = 1;
+        var thickness = 3; // Same thickness as date digits (width > 20 ? 5 : 3, so 3 for small digits)
         var gap = 1;
         
         // Calculate segment positions directly
@@ -431,42 +424,56 @@ class SevenSegView extends WatchUi.WatchFace {
         var bottom = y + height - gap;
         var midY = y + height / 2;
         
-        // Draw each segment directly
+        // Draw each segment directly with dithering on unlit segments
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
         
         // Segment a (top horizontal)
         if (segments[0] == 1) {
             dc.fillRectangle(left, top, right - left, thickness);
+        } else {
+            drawDitheredRect(dc, left, top, right - left, thickness);
         }
         
         // Segment b (top right vertical)
         if (segments[1] == 1) {
             dc.fillRectangle(right - thickness, top, thickness, midY - top);
+        } else {
+            drawDitheredRect(dc, right - thickness, top, thickness, midY - top);
         }
         
         // Segment c (bottom right vertical)
         if (segments[2] == 1) {
             dc.fillRectangle(right - thickness, midY, thickness, bottom - midY);
+        } else {
+            drawDitheredRect(dc, right - thickness, midY, thickness, bottom - midY);
         }
         
         // Segment d (bottom horizontal)
         if (segments[3] == 1) {
             dc.fillRectangle(left, bottom - thickness, right - left, thickness);
+        } else {
+            drawDitheredRect(dc, left, bottom - thickness, right - left, thickness);
         }
         
         // Segment e (bottom left vertical)
         if (segments[4] == 1) {
             dc.fillRectangle(left, midY, thickness, bottom - midY);
+        } else {
+            drawDitheredRect(dc, left, midY, thickness, bottom - midY);
         }
         
         // Segment f (top left vertical)
         if (segments[5] == 1) {
             dc.fillRectangle(left, top, thickness, midY - top);
+        } else {
+            drawDitheredRect(dc, left, top, thickness, midY - top);
         }
         
         // Segment g (middle horizontal)
         if (segments[6] == 1) {
             dc.fillRectangle(left, midY - thickness/2, right - left, thickness);
+        } else {
+            drawDitheredRect(dc, left, midY - thickness/2, right - left, thickness);
         }
     }
 
