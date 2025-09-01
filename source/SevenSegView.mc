@@ -51,7 +51,7 @@ class SevenSegView extends WatchUi.WatchFace {
         var today = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
         
         // Draw time (large, center)
-        drawLargeTime(dc, now.hour, now.minute);
+        drawLargeTime(dc, now.hour, now.min);
         
         // Draw date (top left)
         drawDate(dc, today.day, today.month - 1);
