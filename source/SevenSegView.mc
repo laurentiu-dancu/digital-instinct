@@ -9,8 +9,8 @@ using Toybox.SensorHistory;
 
 class SevenSegView extends WatchUi.WatchFace {
 
-    private var _segmentMaps as Dictionary<Number, Array<Boolean>>;
-    private var _monthNames as Array<String>;
+    private var _segmentMaps as Lang.Dictionary<Lang.Number, Lang.Array<Lang.Boolean>>;
+    private var _monthNames as Lang.Array<Lang.String>;
 
     function initialize() {
         WatchFace.initialize();
@@ -34,14 +34,14 @@ class SevenSegView extends WatchUi.WatchFace {
                       "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
     }
 
-    function onLayout(dc as Dc) as Void {
+    function onLayout(dc as Graphics.Dc) as Void {
         setLayout(Rez.Layouts.WatchFace(dc));
     }
 
     function onShow() as Void {
     }
 
-    function onUpdate(dc as Dc) as Void {
+    function onUpdate(dc as Graphics.Dc) as Void {
         // Clear the screen with white background
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_WHITE);
         dc.clear();
@@ -51,7 +51,7 @@ class SevenSegView extends WatchUi.WatchFace {
         var today = Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
         
         // Draw time (large, center)
-        drawLargeTime(dc, now.hour, now.min);
+        drawLargeTime(dc, now.hour, now.minute);
         
         // Draw date (top left)
         drawDate(dc, today.day, today.month - 1);
@@ -69,7 +69,7 @@ class SevenSegView extends WatchUi.WatchFace {
     function onEnterSleep() as Void {
     }
 
-    private function drawLargeTime(dc as Dc, hour as Number, minute as Number) as Void {
+    private function drawLargeTime(dc as Graphics.Dc, hour as Lang.Number, minute as Lang.Number) as Void {
         var centerX = dc.getWidth() / 2;
         var centerY = dc.getHeight() / 2;
         
@@ -101,7 +101,7 @@ class SevenSegView extends WatchUi.WatchFace {
         drawSevenSegmentDigit(dc, startX + digitSpacing * 3 + colonWidth, timeY, digitWidth, digitHeight, minuteOnes, false);
     }
 
-    private function drawDate(dc as Dc, day as Number, monthIndex as Number) as Void {
+    private function drawDate(dc as Graphics.Dc, day as Lang.Number, monthIndex as Lang.Number) as Void {
         var dateX = 15;
         var dateY = 25;
         var smallDigitWidth = 16;
@@ -119,7 +119,7 @@ class SevenSegView extends WatchUi.WatchFace {
         drawMonthText(dc, monthX, dateY, _monthNames[monthIndex]);
     }
 
-    private function drawHeartRate(dc as Dc) as Void {
+    private function drawHeartRate(dc as Graphics.Dc) as Void {
         var hrInfo = ActivityMonitor.getHeartRateHistory(1, true);
         var heartRate = 0;
         
@@ -142,7 +142,7 @@ class SevenSegView extends WatchUi.WatchFace {
         }
     }
 
-    private function drawSevenSegmentDigit(dc as Dc, x as Number, y as Number, width as Number, height as Number, digit as Number, showBackground as Boolean) as Void {
+    private function drawSevenSegmentDigit(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, width as Lang.Number, height as Lang.Number, digit as Lang.Number, showBackground as Lang.Boolean) as Void {
         var segments = _segmentMaps[digit];
         var thickness = 3;
         var gap = 2;
@@ -168,7 +168,7 @@ class SevenSegView extends WatchUi.WatchFace {
         }
     }
 
-    private function calculateSegmentCoords(x as Number, y as Number, width as Number, height as Number, thickness as Number, gap as Number) as Array<Array<Number>> {
+    private function calculateSegmentCoords(x as Lang.Number, y as Lang.Number, width as Lang.Number, height as Lang.Number, thickness as Lang.Number, gap as Lang.Number) as Lang.Array<Lang.Array<Lang.Number>> {
         var halfWidth = width / 2;
         var halfHeight = height / 2;
         var midY = y + halfHeight;
@@ -191,11 +191,11 @@ class SevenSegView extends WatchUi.WatchFace {
         ];
     }
 
-    private function drawSegment(dc as Dc, coords as Array<Number>) as Void {
+    private function drawSegment(dc as Graphics.Dc, coords as Lang.Array<Lang.Number>) as Void {
         dc.fillRectangle(coords[0], coords[1], coords[2] - coords[0], coords[3] - coords[1]);
     }
 
-    private function drawDitheredSegment(dc as Dc, coords as Array<Number>) as Void {
+    private function drawDitheredSegment(dc as Graphics.Dc, coords as Lang.Array<Lang.Number>) as Void {
         // Create dithered pattern for gray appearance
         var startX = coords[0];
         var startY = coords[1];
@@ -214,7 +214,7 @@ class SevenSegView extends WatchUi.WatchFace {
         }
     }
 
-    private function drawColon(dc as Dc, x as Number, y as Number, height as Number) as Void {
+    private function drawColon(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, height as Lang.Number) as Void {
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
         var dotSize = 3;
         var quarterHeight = height / 4;
@@ -225,7 +225,7 @@ class SevenSegView extends WatchUi.WatchFace {
         dc.fillRectangle(x, y + height - quarterHeight - dotSize, dotSize, dotSize);
     }
 
-    private function drawMonthText(dc as Dc, x as Number, y as Number, monthStr as String) as Void {
+    private function drawMonthText(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, monthStr as Lang.String) as Void {
         // Simple bitmap-style text for month using mini 7-segment style
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
         
@@ -239,7 +239,7 @@ class SevenSegView extends WatchUi.WatchFace {
         }
     }
 
-    private function drawMiniChar(dc as Dc, x as Number, y as Number, width as Number, height as Number, char as String) as Void {
+    private function drawMiniChar(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, width as Lang.Number, height as Lang.Number, char as Lang.String) as Void {
         // Simplified character patterns for A-Z in mini 7-segment style
         var patterns = {
             "A" => [[1,1,1,0,1,1,1]], // simplified A pattern
@@ -271,7 +271,7 @@ class SevenSegView extends WatchUi.WatchFace {
         }
     }
 
-    private function drawMiniSevenSeg(dc as Dc, x as Number, y as Number, width as Number, height as Number, segments as Array<Boolean>) as Void {
+    private function drawMiniSevenSeg(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, width as Lang.Number, height as Lang.Number, segments as Lang.Array<Lang.Boolean>) as Void {
         var thickness = 2;
         var gap = 1;
         var halfWidth = width / 2;
@@ -303,7 +303,7 @@ class SevenSegView extends WatchUi.WatchFace {
         }
     }
 
-    function onPartialUpdate(dc as Dc) as Void {
+    function onPartialUpdate(dc as Graphics.Dc) as Void {
         // For battery optimization, we could implement partial updates here
         onUpdate(dc);
     }
