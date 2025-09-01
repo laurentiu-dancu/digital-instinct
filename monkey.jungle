@@ -1,11 +1,1 @@
 project.manifest = manifest.xml
-
-# Base source files
-base.sourcePath = source
-
-# Resources
-base.resourcePath = resources
-
-# Build configuration for Instinct 2
-instinct2.sourcePath = $(base.sourcePath)
-instinct2.resourcePath = $(base.resourcePath)
