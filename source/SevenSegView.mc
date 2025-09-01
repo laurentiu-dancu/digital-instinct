@@ -117,7 +117,7 @@ class SevenSegView extends WatchUi.WatchFace {
     }
 
     private function drawDate(dc as Graphics.Dc, day as Lang.Number, monthIndex as Lang.Number) as Void {
-        var dateX = 15;
+        var dateX = 12; // Moved 3px to the left
         var dateY = 25;
         var smallDigitWidth = 16; // Uniform digit width
         var smallDigitHeight = 22; // Uniform digit height
@@ -336,10 +336,10 @@ class SevenSegView extends WatchUi.WatchFace {
     private function drawDitheredRect(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, width as Lang.Number, height as Lang.Number) as Void {
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
         
-        // Simple checkerboard dithering pattern
+        // Organic dithering pattern - less orderly but not chaotic
         for (var px = x; px < x + width; px++) {
             for (var py = y; py < y + height; py++) {
-                if ((px + py) % 2 == 0) {
+                if ((px * 2 + py * 3) % 7 == 0) {
                     dc.drawPoint(px, py);
                 }
             }
