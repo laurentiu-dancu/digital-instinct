@@ -72,6 +72,9 @@ class SevenSegView extends WatchUi.WatchFace {
         // Draw heart rate (top right)
         drawHeartRate(dc);
         
+        // Draw battery indicator
+        drawBatteryIndicator(dc);
+        
         _lastUpdateTime = System.getClockTime().min;
     }
 
@@ -88,16 +91,16 @@ class SevenSegView extends WatchUi.WatchFace {
         var centerX = dc.getWidth() / 2;
         var centerY = dc.getHeight() / 2;
         
-        // Time digit positions - optimized for 176x176 display, avoiding circular overlay
-        var digitWidth = 38; // Bigger digits
-        var digitHeight = 56; // Bigger height
-        var digitSpacing = 40; // Slightly more spacing
-        var colonWidth = 12; // Bigger colon
+        // Time digit positions - optimized for 176x176 display
+        var digitWidth = 38;
+        var digitHeight = 56;
+        var digitSpacing = 40;
+        var colonWidth = 12;
         
-        // Calculate positions for HH:MM - final positioning
+        // Calculate positions for HH:MM
         var totalWidth = digitWidth * 4 + colonWidth + digitSpacing * 3;
-        var startX = centerX - totalWidth / 2 + 57; // Final position: 2px more to the right
-        var timeY = centerY - digitHeight / 2 + 25; // Moved down more
+        var startX = centerX - totalWidth / 2 + 57;
+        var timeY = centerY - digitHeight / 2 + 25;
         
         // Draw hour digits
         var hourTens = hour / 10;
@@ -117,23 +120,21 @@ class SevenSegView extends WatchUi.WatchFace {
     }
 
     private function drawDate(dc as Graphics.Dc, day as Lang.Number, monthIndex as Lang.Number) as Void {
-        var dateX = 12; // Moved 3px to the left
+        var dateX = 12;
         var dateY = 25;
-        var smallDigitWidth = 16; // Uniform digit width
-        var smallDigitHeight = 22; // Uniform digit height
-        var spacing = 16; // Reduced spacing to avoid circle overlap
+        var smallDigitWidth = 16;
+        var smallDigitHeight = 22;
+        var spacing = 16;
         
-        // Draw day (DD) - ensure we have valid numbers
+        // Draw day (DD)
         var dayTens = day / 10;
         var dayOnes = day % 10;
         
-        // Debug: Draw day values directly with dithering on unlit segments
         drawSevenSegmentDigit(dc, dateX, dateY, smallDigitWidth, smallDigitHeight, dayTens, true);
         drawSevenSegmentDigit(dc, dateX + spacing, dateY, smallDigitWidth, smallDigitHeight, dayOnes, true);
         
-        // Draw month text using proper 7-segment patterns - same size as digits
-        var monthX = dateX + spacing * 2 + 6; // Reduced spacing to avoid circle overlap
-        // Month index is 1-based (1=January), convert to 0-based for array
+        // Draw month text
+        var monthX = dateX + spacing * 2 + 6;
         var monthArrayIndex = monthIndex - 1;
         drawMonthText(dc, monthX, dateY, monthArrayIndex);
     }
@@ -151,36 +152,31 @@ class SevenSegView extends WatchUi.WatchFace {
                 }
             }
         } catch (ex) {
-            // If heart rate fails, just show 0
             heartRate = 0;
         }
         
-        // Position in top right corner - better centered in circular area
+        // Position in top right corner
         var hrX = dc.getWidth() - 50;
         var hrY = 20;
         
-        // Always draw heart rate display (even if 0)
         drawHeartRateDigits(dc, hrX, hrY, heartRate);
     }
 
     private function drawHeartRateDigits(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, hr as Lang.Number) as Void {
-        var digitWidth = 18; // Larger digits for heart rate
-        var digitHeight = 28; // Larger height
-        var spacing = 20; // More spacing between digits
+        var digitWidth = 18;
+        var digitHeight = 28;
+        var spacing = 20;
         
         // Convert heart rate to digits
         var hrStr = hr.toString();
         if (hrStr.length() == 1) {
-            // Single digit
             drawSevenSegmentDigit(dc, x + spacing, y, digitWidth, digitHeight, hr.toNumber(), false);
         } else if (hrStr.length() == 2) {
-            // Two digits
             var tens = (hr / 10).toNumber();
             var ones = hr % 10;
             drawSevenSegmentDigit(dc, x, y, digitWidth, digitHeight, tens, false);
             drawSevenSegmentDigit(dc, x + spacing, y, digitWidth, digitHeight, ones, false);
         } else {
-            // Three digits (100+)
             var hundreds = (hr / 100).toNumber();
             var tens = ((hr % 100) / 10).toNumber();
             var ones = hr % 10;
@@ -188,8 +184,6 @@ class SevenSegView extends WatchUi.WatchFace {
             drawSevenSegmentDigit(dc, x + spacing, y, digitWidth, digitHeight, tens, false);
             drawSevenSegmentDigit(dc, x + spacing * 2, y, digitWidth, digitHeight, ones, false);
         }
-        
-        // BPM label removed for cleaner look
     }
 
     private function drawBatteryIndicator(dc as Graphics.Dc) as Void {
@@ -207,10 +201,10 @@ class SevenSegView extends WatchUi.WatchFace {
         // Battery terminal
         dc.fillRectangle(batteryX + batteryWidth, batteryY + 4, 3, 8);
         
-        // Battery level - ensure we have a valid value
+        // Battery level
         var batteryLevel = _batteryLevel;
         if (batteryLevel < 0 || batteryLevel > 100) {
-            batteryLevel = 100; // Default to 100% if invalid
+            batteryLevel = 100;
         }
         
         var fillWidth = (batteryWidth - 2) * batteryLevel / 100;
@@ -229,68 +223,68 @@ class SevenSegView extends WatchUi.WatchFace {
             return;
         }
         
-        // Chamfered 7-segment drawing for authentic LCD look
-        var thickness = width > 20 ? 8 : 3; // Slightly reduced for better chamfering
-        var chamferSize = thickness / 2; // Size of the angled cuts
-        var gap = width > 20 ? 3 : 2; // Increased gap for better separation
+        // Calculate chamfered segment parameters
+        var thickness = width > 20 ? 6 : 3;
+        var chamferSize = thickness / 2;
+        var gap = 3; // Increased gap for better separation
         
-        // Calculate segment positions with chamfering in mind
-        var left = x + gap + chamferSize;
-        var right = x + width - gap - chamferSize;
-        var top = y + gap + chamferSize;
-        var bottom = y + height - gap - chamferSize;
+        // Calculate segment positions with proper chamfering
+        var left = x + gap;
+        var right = x + width - gap;
+        var top = y + gap;
+        var bottom = y + height - gap;
         var midY = y + height / 2;
         
         // Draw each segment with chamfered ends
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
         
-        // Segment a (top horizontal)
+        // Segment a (top horizontal) - chamfered on both ends
         if (segments[0] == 1) {
-            drawChamferedHorizontalSegment(dc, left, right, top - chamferSize, thickness, chamferSize);
+            drawChamferedHorizontalSegment(dc, left + chamferSize, right - chamferSize, top, thickness, chamferSize);
         } else if (showBackground) {
-            drawDitheredChamferedHorizontalSegment(dc, left, right, top - chamferSize, thickness, chamferSize, 0);
+            drawDitheredChamferedHorizontalSegment(dc, left + chamferSize, right - chamferSize, top, thickness, chamferSize, 0);
         }
         
-        // Segment b (top right vertical)
+        // Segment b (top right vertical) - chamfered on top and middle
         if (segments[1] == 1) {
-            drawChamferedVerticalSegment(dc, right, top, midY - chamferSize, thickness, chamferSize);
+            drawChamferedVerticalSegment(dc, right - thickness/2, top + chamferSize, midY - chamferSize, thickness, chamferSize);
         } else if (showBackground) {
-            drawDitheredChamferedVerticalSegment(dc, right, top, midY - chamferSize, thickness, chamferSize, 1);
+            drawDitheredChamferedVerticalSegment(dc, right - thickness/2, top + chamferSize, midY - chamferSize, thickness, chamferSize, 1);
         }
         
-        // Segment c (bottom right vertical)
+        // Segment c (bottom right vertical) - chamfered on middle and bottom
         if (segments[2] == 1) {
-            drawChamferedVerticalSegment(dc, right, midY + chamferSize, bottom, thickness, chamferSize);
+            drawChamferedVerticalSegment(dc, right - thickness/2, midY + chamferSize, bottom - chamferSize, thickness, chamferSize);
         } else if (showBackground) {
-            drawDitheredChamferedVerticalSegment(dc, right, midY + chamferSize, bottom, thickness, chamferSize, 2);
+            drawDitheredChamferedVerticalSegment(dc, right - thickness/2, midY + chamferSize, bottom - chamferSize, thickness, chamferSize, 2);
         }
         
-        // Segment d (bottom horizontal)
+        // Segment d (bottom horizontal) - chamfered on both ends
         if (segments[3] == 1) {
-            drawChamferedHorizontalSegment(dc, left, right, bottom, thickness, chamferSize);
+            drawChamferedHorizontalSegment(dc, left + chamferSize, right - chamferSize, bottom - thickness, thickness, chamferSize);
         } else if (showBackground) {
-            drawDitheredChamferedHorizontalSegment(dc, left, right, bottom, thickness, chamferSize, 3);
+            drawDitheredChamferedHorizontalSegment(dc, left + chamferSize, right - chamferSize, bottom - thickness, thickness, chamferSize, 3);
         }
         
-        // Segment e (bottom left vertical)
+        // Segment e (bottom left vertical) - chamfered on middle and bottom
         if (segments[4] == 1) {
-            drawChamferedVerticalSegment(dc, left - chamferSize, midY + chamferSize, bottom, thickness, chamferSize);
+            drawChamferedVerticalSegment(dc, left + thickness/2, midY + chamferSize, bottom - chamferSize, thickness, chamferSize);
         } else if (showBackground) {
-            drawDitheredChamferedVerticalSegment(dc, left - chamferSize, midY + chamferSize, bottom, thickness, chamferSize, 4);
+            drawDitheredChamferedVerticalSegment(dc, left + thickness/2, midY + chamferSize, bottom - chamferSize, thickness, chamferSize, 4);
         }
         
-        // Segment f (top left vertical)
+        // Segment f (top left vertical) - chamfered on top and middle
         if (segments[5] == 1) {
-            drawChamferedVerticalSegment(dc, left - chamferSize, top, midY - chamferSize, thickness, chamferSize);
+            drawChamferedVerticalSegment(dc, left + thickness/2, top + chamferSize, midY - chamferSize, thickness, chamferSize);
         } else if (showBackground) {
-            drawDitheredChamferedVerticalSegment(dc, left - chamferSize, top, midY - chamferSize, thickness, chamferSize, 5);
+            drawDitheredChamferedVerticalSegment(dc, left + thickness/2, top + chamferSize, midY - chamferSize, thickness, chamferSize, 5);
         }
         
-        // Segment g (middle horizontal)
+        // Segment g (middle horizontal) - chamfered on both ends
         if (segments[6] == 1) {
-            drawChamferedHorizontalSegment(dc, left, right, midY, thickness, chamferSize);
+            drawChamferedHorizontalSegment(dc, left + chamferSize, right - chamferSize, midY - thickness/2, thickness, chamferSize);
         } else if (showBackground) {
-            drawDitheredChamferedHorizontalSegment(dc, left, right, midY, thickness, chamferSize, 6);
+            drawDitheredChamferedHorizontalSegment(dc, left + chamferSize, right - chamferSize, midY - thickness/2, thickness, chamferSize, 6);
         }
     }
 
@@ -445,90 +439,21 @@ class SevenSegView extends WatchUi.WatchFace {
         }
     }
 
-    private function calculateSegmentCoords(x as Lang.Number, y as Lang.Number, width as Lang.Number, height as Lang.Number, thickness as Lang.Number, gap as Lang.Number) as Lang.Array<Lang.Array<Lang.Number>> {
-        var halfWidth = width / 2;
-        var halfHeight = height / 2;
-        var midY = y + halfHeight;
-        
-        return [
-            // Segment a (top horizontal)
-            [x + gap, y, x + width - gap, y + thickness],
-            // Segment b (top right vertical)
-            [x + width - thickness, y + gap, x + width, midY - gap],
-            // Segment c (bottom right vertical)
-            [x + width - thickness, midY + gap, x + width, y + height - gap],
-            // Segment d (bottom horizontal)
-            [x + gap, y + height - thickness, x + width - gap, y + height],
-            // Segment e (bottom left vertical)
-            [x, midY + gap, x + thickness, y + height - gap],
-            // Segment f (top left vertical)
-            [x, y + gap, x + thickness, midY - gap],
-            // Segment g (middle horizontal)
-            [x + gap, midY - thickness/2, x + width - gap, midY + thickness/2]
-        ];
-    }
-
-    private function drawSegment(dc as Graphics.Dc, coords as Lang.Array<Lang.Number>, thickness as Lang.Number) as Void {
-        var x1 = coords[0];
-        var y1 = coords[1];
-        var x2 = coords[2];
-        var y2 = coords[3];
-        
-        if (x1 == x2) {
-            // Vertical segment
-            dc.fillRectangle(x1 - thickness/2, y1, thickness, y2 - y1);
-        } else {
-            // Horizontal segment
-            dc.fillRectangle(x1, y1 - thickness/2, x2 - x1, thickness);
-        drawBatteryIndicator(dc);
-    }
-
-    private function drawBatteryIndicator(dc as Graphics.Dc) as Void {
-        var centerX = dc.getWidth() / 2;
-        var batteryY = dc.getHeight() - 25;
-        
-        // Battery outline
-        var batteryWidth = 40;
-        var batteryHeight = 16;
-        var batteryX = centerX - batteryWidth / 2;
-        
-        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
-        dc.drawRectangle(batteryX, batteryY, batteryWidth, batteryHeight);
-        
-        // Battery terminal
-        dc.fillRectangle(batteryX + batteryWidth, batteryY + 4, 3, 8);
-        
-        // Battery level - ensure we have a valid value
-        var batteryLevel = _batteryLevel;
-        if (batteryLevel < 0 || batteryLevel > 100) {
-            batteryLevel = 100; // Default to 100% if invalid
-        }
-        
-        var fillWidth = (batteryWidth - 2) * batteryLevel / 100;
-        if (fillWidth > 0) {
-            dc.fillRectangle(batteryX + 1, batteryY + 1, fillWidth, batteryHeight - 2);
-        }
-        
-        // Battery percentage text
-        var percentText = batteryLevel.toString() + "%";
-        dc.drawText(centerX, batteryY - 5, Graphics.FONT_TINY, percentText, Graphics.TEXT_JUSTIFY_CENTER);
-    }
-
     private function drawColon(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, height as Lang.Number) as Void {
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
-        var dotSize = 6; // Slightly larger dots
+        var dotSize = 6;
         var quarterHeight = height / 4;
         
-        // Upper dot - more centered
+        // Upper dot
         dc.fillRectangle(x, y + quarterHeight - dotSize/2, dotSize, dotSize);
-        // Lower dot - more centered
+        // Lower dot
         dc.fillRectangle(x, y + height - quarterHeight - dotSize/2, dotSize, dotSize);
     }
 
     private function drawMonthText(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, monthIndex as Lang.Number) as Void {
         // Validate month index
         if (monthIndex < 0 || monthIndex >= _monthNames.size()) {
-            monthIndex = 0; // Default to January if invalid
+            monthIndex = 0;
         }
         
         var monthStr = _monthNames[monthIndex];
@@ -536,10 +461,10 @@ class SevenSegView extends WatchUi.WatchFace {
             return;
         }
         
-        // Draw month using proper 7-segment patterns - uniform size with date digits
-        var charWidth = 16; // Same as date digits
-        var charHeight = 22; // Same as date digits
-        var charSpacing = 16; // Same spacing as date digits
+        // Draw month using 7-segment patterns
+        var charWidth = 16;
+        var charHeight = 22;
+        var charSpacing = 16;
         
         for (var i = 0; i < monthStr.length(); i++) {
             var char = monthStr.substring(i, i + 1);
@@ -548,7 +473,7 @@ class SevenSegView extends WatchUi.WatchFace {
     }
 
     private function drawMonthChar(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, width as Lang.Number, height as Lang.Number, char as Lang.String) as Void {
-        // Proper 7-segment patterns for month abbreviations - corrected patterns
+        // 7-segment patterns for month abbreviations
         var patterns = {
             "J" => [0, 0, 1, 1, 1, 0, 0],  // J pattern
             "A" => [1, 1, 0, 0, 0, 1, 1],  // A pattern
@@ -570,8 +495,8 @@ class SevenSegView extends WatchUi.WatchFace {
             "H" => [0, 1, 1, 0, 1, 1, 1],  // H pattern
             "I" => [0, 1, 1, 0, 0, 0, 0],  // I pattern
             "P" => [1, 1, 0, 0, 1, 1, 1],  // P pattern
-            "V" => [0, 1, 1, 1, 1, 1, 0],  // V pattern (same as U)
-            "W" => [0, 1, 1, 1, 1, 1, 0]   // W pattern (same as U)
+            "V" => [0, 1, 1, 1, 1, 1, 0],  // V pattern
+            "W" => [0, 1, 1, 1, 1, 1, 0]   // W pattern
         };
         
         var pattern = patterns.get(char);
@@ -582,15 +507,15 @@ class SevenSegView extends WatchUi.WatchFace {
     }
 
     private function drawMiniSevenSeg(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, width as Lang.Number, height as Lang.Number, segments as Lang.Array<Lang.Number>) as Void {
-        var thickness = 3; // Same thickness as date digits
-        var chamferSize = 1; // Smaller chamfer for mini segments
-        var gap = 2; // Increased gap for better separation
+        var thickness = 3;
+        var chamferSize = 1;
+        var gap = 2;
         
         // Calculate segment positions with chamfering
-        var left = x + gap + chamferSize;
-        var right = x + width - gap - chamferSize;
-        var top = y + gap + chamferSize;
-        var bottom = y + height - gap - chamferSize;
+        var left = x + gap;
+        var right = x + width - gap;
+        var top = y + gap;
+        var bottom = y + height - gap;
         var midY = y + height / 2;
         
         // Draw each segment with chamfering
@@ -598,51 +523,51 @@ class SevenSegView extends WatchUi.WatchFace {
         
         // Segment a (top horizontal)
         if (segments[0] == 1) {
-            drawChamferedHorizontalSegment(dc, left, right, top - chamferSize, thickness, chamferSize);
+            drawChamferedHorizontalSegment(dc, left + chamferSize, right - chamferSize, top, thickness, chamferSize);
         } else {
-            drawDitheredChamferedHorizontalSegment(dc, left, right, top - chamferSize, thickness, chamferSize, 0);
+            drawDitheredChamferedHorizontalSegment(dc, left + chamferSize, right - chamferSize, top, thickness, chamferSize, 0);
         }
         
         // Segment b (top right vertical)
         if (segments[1] == 1) {
-            drawChamferedVerticalSegment(dc, right, top, midY - chamferSize, thickness, chamferSize);
+            drawChamferedVerticalSegment(dc, right - thickness/2, top + chamferSize, midY - chamferSize, thickness, chamferSize);
         } else {
-            drawDitheredChamferedVerticalSegment(dc, right, top, midY - chamferSize, thickness, chamferSize, 1);
+            drawDitheredChamferedVerticalSegment(dc, right - thickness/2, top + chamferSize, midY - chamferSize, thickness, chamferSize, 1);
         }
         
         // Segment c (bottom right vertical)
         if (segments[2] == 1) {
-            drawChamferedVerticalSegment(dc, right, midY + chamferSize, bottom, thickness, chamferSize);
+            drawChamferedVerticalSegment(dc, right - thickness/2, midY + chamferSize, bottom - chamferSize, thickness, chamferSize);
         } else {
-            drawDitheredChamferedVerticalSegment(dc, right, midY + chamferSize, bottom, thickness, chamferSize, 2);
+            drawDitheredChamferedVerticalSegment(dc, right - thickness/2, midY + chamferSize, bottom - chamferSize, thickness, chamferSize, 2);
         }
         
         // Segment d (bottom horizontal)
         if (segments[3] == 1) {
-            drawChamferedHorizontalSegment(dc, left, right, bottom, thickness, chamferSize);
+            drawChamferedHorizontalSegment(dc, left + chamferSize, right - chamferSize, bottom - thickness, thickness, chamferSize);
         } else {
-            drawDitheredChamferedHorizontalSegment(dc, left, right, bottom, thickness, chamferSize, 3);
+            drawDitheredChamferedHorizontalSegment(dc, left + chamferSize, right - chamferSize, bottom - thickness, thickness, chamferSize, 3);
         }
         
         // Segment e (bottom left vertical)
         if (segments[4] == 1) {
-            drawChamferedVerticalSegment(dc, left - chamferSize, midY + chamferSize, bottom, thickness, chamferSize);
+            drawChamferedVerticalSegment(dc, left + thickness/2, midY + chamferSize, bottom - chamferSize, thickness, chamferSize);
         } else {
-            drawDitheredChamferedVerticalSegment(dc, left - chamferSize, midY + chamferSize, bottom, thickness, chamferSize, 4);
+            drawDitheredChamferedVerticalSegment(dc, left + thickness/2, midY + chamferSize, bottom - chamferSize, thickness, chamferSize, 4);
         }
         
         // Segment f (top left vertical)
         if (segments[5] == 1) {
-            drawChamferedVerticalSegment(dc, left - chamferSize, top, midY - chamferSize, thickness, chamferSize);
+            drawChamferedVerticalSegment(dc, left + thickness/2, top + chamferSize, midY - chamferSize, thickness, chamferSize);
         } else {
-            drawDitheredChamferedVerticalSegment(dc, left - chamferSize, top, midY - chamferSize, thickness, chamferSize, 5);
+            drawDitheredChamferedVerticalSegment(dc, left + thickness/2, top + chamferSize, midY - chamferSize, thickness, chamferSize, 5);
         }
         
         // Segment g (middle horizontal)
         if (segments[6] == 1) {
-            drawChamferedHorizontalSegment(dc, left, right, midY, thickness, chamferSize);
+            drawChamferedHorizontalSegment(dc, left + chamferSize, right - chamferSize, midY - thickness/2, thickness, chamferSize);
         } else {
-            drawDitheredChamferedHorizontalSegment(dc, left, right, midY, thickness, chamferSize, 6);
+            drawDitheredChamferedHorizontalSegment(dc, left + chamferSize, right - chamferSize, midY - thickness/2, thickness, chamferSize, 6);
         }
     }
 
