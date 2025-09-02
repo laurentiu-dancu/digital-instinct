@@ -230,7 +230,7 @@ class SevenSegView extends WatchUi.WatchFace {
         }
         
         // Simple, direct 7-segment drawing
-        var thickness = width > 20 ? 5 : 3; // Slightly thicker for better readability
+        var thickness = width > 20 ? 9 : 3; // Slightly thicker for better readability
         var gap = width > 20 ? 2 : 1;
         
         // Calculate segment positions directly
@@ -339,7 +339,7 @@ class SevenSegView extends WatchUi.WatchFace {
         // Organic dithering pattern - less orderly but not chaotic
         for (var px = x; px < x + width; px++) {
             for (var py = y; py < y + height; py++) {
-                if ((px * 2 + py * 3) % 7 == 0) {
+                if ((px * 2 + py * 2) % 4 == 0) {
                     dc.drawPoint(px, py);
                 }
             }
