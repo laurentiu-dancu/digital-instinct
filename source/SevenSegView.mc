@@ -229,70 +229,220 @@ class SevenSegView extends WatchUi.WatchFace {
             return;
         }
         
-        // Simple, direct 7-segment drawing
-        var thickness = width > 20 ? 9 : 3; // Slightly thicker for better readability
-        var gap = width > 20 ? 2 : 1;
+        // Chamfered 7-segment drawing for authentic LCD look
+        var thickness = width > 20 ? 8 : 3; // Slightly reduced for better chamfering
+        var chamferSize = thickness / 2; // Size of the angled cuts
+        var gap = width > 20 ? 3 : 2; // Increased gap for better separation
         
-        // Calculate segment positions directly
-        var left = x + gap;
-        var right = x + width - gap;
-        var top = y + gap;
-        var bottom = y + height - gap;
+        // Calculate segment positions with chamfering in mind
+        var left = x + gap + chamferSize;
+        var right = x + width - gap - chamferSize;
+        var top = y + gap + chamferSize;
+        var bottom = y + height - gap - chamferSize;
         var midY = y + height / 2;
         
-        // Draw each segment directly as a rectangle
+        // Draw each segment with chamfered ends
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
         
         // Segment a (top horizontal)
         if (segments[0] == 1) {
-            dc.fillRectangle(left, top, right - left, thickness);
+            drawChamferedHorizontalSegment(dc, left, right, top - chamferSize, thickness, chamferSize);
         } else if (showBackground) {
-            drawDitheredRect(dc, left, top, right - left, thickness);
+            drawDitheredChamferedHorizontalSegment(dc, left, right, top - chamferSize, thickness, chamferSize, 0);
         }
         
         // Segment b (top right vertical)
         if (segments[1] == 1) {
-            dc.fillRectangle(right - thickness, top, thickness, midY - top);
+            drawChamferedVerticalSegment(dc, right, top, midY - chamferSize, thickness, chamferSize);
         } else if (showBackground) {
-            drawDitheredRect(dc, right - thickness, top, thickness, midY - top);
+            drawDitheredChamferedVerticalSegment(dc, right, top, midY - chamferSize, thickness, chamferSize, 1);
         }
         
         // Segment c (bottom right vertical)
         if (segments[2] == 1) {
-            dc.fillRectangle(right - thickness, midY, thickness, bottom - midY);
+            drawChamferedVerticalSegment(dc, right, midY + chamferSize, bottom, thickness, chamferSize);
         } else if (showBackground) {
-            drawDitheredRect(dc, right - thickness, midY, thickness, bottom - midY);
+            drawDitheredChamferedVerticalSegment(dc, right, midY + chamferSize, bottom, thickness, chamferSize, 2);
         }
         
         // Segment d (bottom horizontal)
         if (segments[3] == 1) {
-            dc.fillRectangle(left, bottom - thickness, right - left, thickness);
+            drawChamferedHorizontalSegment(dc, left, right, bottom, thickness, chamferSize);
         } else if (showBackground) {
-            drawDitheredRect(dc, left, bottom - thickness, right - left, thickness);
+            drawDitheredChamferedHorizontalSegment(dc, left, right, bottom, thickness, chamferSize, 3);
         }
         
         // Segment e (bottom left vertical)
         if (segments[4] == 1) {
-            dc.fillRectangle(left, midY, thickness, bottom - midY);
+            drawChamferedVerticalSegment(dc, left - chamferSize, midY + chamferSize, bottom, thickness, chamferSize);
         } else if (showBackground) {
-            drawDitheredRect(dc, left, midY, thickness, bottom - midY);
+            drawDitheredChamferedVerticalSegment(dc, left - chamferSize, midY + chamferSize, bottom, thickness, chamferSize, 4);
         }
         
         // Segment f (top left vertical)
         if (segments[5] == 1) {
-            dc.fillRectangle(left, top, thickness, midY - top);
+            drawChamferedVerticalSegment(dc, left - chamferSize, top, midY - chamferSize, thickness, chamferSize);
         } else if (showBackground) {
-            drawDitheredRect(dc, left, top, thickness, midY - top);
+            drawDitheredChamferedVerticalSegment(dc, left - chamferSize, top, midY - chamferSize, thickness, chamferSize, 5);
         }
         
         // Segment g (middle horizontal)
         if (segments[6] == 1) {
-            dc.fillRectangle(left, midY - thickness/2, right - left, thickness);
+            drawChamferedHorizontalSegment(dc, left, right, midY, thickness, chamferSize);
         } else if (showBackground) {
-            drawDitheredRect(dc, left, midY - thickness/2, right - left, thickness);
+            drawDitheredChamferedHorizontalSegment(dc, left, right, midY, thickness, chamferSize, 6);
+        }
+    }
+
+    private function drawChamferedHorizontalSegment(dc as Graphics.Dc, leftX as Lang.Number, rightX as Lang.Number, centerY as Lang.Number, thickness as Lang.Number, chamferSize as Lang.Number) as Void {
+        var halfThickness = thickness / 2;
+        var topY = centerY - halfThickness;
+        var bottomY = centerY + halfThickness;
+        
+        // Main rectangle (center part)
+        dc.fillRectangle(leftX + chamferSize, topY, rightX - leftX - 2 * chamferSize, thickness);
+        
+        // Left chamfer (angled cut)
+        for (var i = 0; i < chamferSize; i++) {
+            var lineX = leftX + i;
+            var lineTopY = topY + i;
+            var lineBottomY = bottomY - i;
+            if (lineTopY <= lineBottomY) {
+                dc.drawLine(lineX, lineTopY, lineX, lineBottomY);
+            }
         }
         
-        // Debug bounding boxes removed for production
+        // Right chamfer (angled cut)
+        for (var i = 0; i < chamferSize; i++) {
+            var lineX = rightX - i - 1;
+            var lineTopY = topY + i;
+            var lineBottomY = bottomY - i;
+            if (lineTopY <= lineBottomY) {
+                dc.drawLine(lineX, lineTopY, lineX, lineBottomY);
+            }
+        }
+    }
+
+    private function drawChamferedVerticalSegment(dc as Graphics.Dc, centerX as Lang.Number, topY as Lang.Number, bottomY as Lang.Number, thickness as Lang.Number, chamferSize as Lang.Number) as Void {
+        var halfThickness = thickness / 2;
+        var leftX = centerX - halfThickness;
+        var rightX = centerX + halfThickness;
+        
+        // Main rectangle (center part)
+        dc.fillRectangle(leftX, topY + chamferSize, thickness, bottomY - topY - 2 * chamferSize);
+        
+        // Top chamfer (angled cut)
+        for (var i = 0; i < chamferSize; i++) {
+            var lineY = topY + i;
+            var lineLeftX = leftX + i;
+            var lineRightX = rightX - i;
+            if (lineLeftX <= lineRightX) {
+                dc.drawLine(lineLeftX, lineY, lineRightX, lineY);
+            }
+        }
+        
+        // Bottom chamfer (angled cut)
+        for (var i = 0; i < chamferSize; i++) {
+            var lineY = bottomY - i - 1;
+            var lineLeftX = leftX + i;
+            var lineRightX = rightX - i;
+            if (lineLeftX <= lineRightX) {
+                dc.drawLine(lineLeftX, lineY, lineRightX, lineY);
+            }
+        }
+    }
+
+    private function drawDitheredChamferedHorizontalSegment(dc as Graphics.Dc, leftX as Lang.Number, rightX as Lang.Number, centerY as Lang.Number, thickness as Lang.Number, chamferSize as Lang.Number, pattern as Lang.Number) as Void {
+        var halfThickness = thickness / 2;
+        var topY = centerY - halfThickness;
+        var bottomY = centerY + halfThickness;
+        
+        // Main rectangle (center part) with dithering
+        drawDitheredRect(dc, leftX + chamferSize, topY, rightX - leftX - 2 * chamferSize, thickness, pattern);
+        
+        // Left chamfer with dithering
+        for (var i = 0; i < chamferSize; i++) {
+            var lineX = leftX + i;
+            var lineTopY = topY + i;
+            var lineBottomY = bottomY - i;
+            for (var py = lineTopY; py <= lineBottomY; py++) {
+                if (shouldDitherPixel(lineX, py, pattern)) {
+                    dc.drawPoint(lineX, py);
+                }
+            }
+        }
+        
+        // Right chamfer with dithering
+        for (var i = 0; i < chamferSize; i++) {
+            var lineX = rightX - i - 1;
+            var lineTopY = topY + i;
+            var lineBottomY = bottomY - i;
+            for (var py = lineTopY; py <= lineBottomY; py++) {
+                if (shouldDitherPixel(lineX, py, pattern)) {
+                    dc.drawPoint(lineX, py);
+                }
+            }
+        }
+    }
+
+    private function drawDitheredChamferedVerticalSegment(dc as Graphics.Dc, centerX as Lang.Number, topY as Lang.Number, bottomY as Lang.Number, thickness as Lang.Number, chamferSize as Lang.Number, pattern as Lang.Number) as Void {
+        var halfThickness = thickness / 2;
+        var leftX = centerX - halfThickness;
+        var rightX = centerX + halfThickness;
+        
+        // Main rectangle (center part) with dithering
+        drawDitheredRect(dc, leftX, topY + chamferSize, thickness, bottomY - topY - 2 * chamferSize, pattern);
+        
+        // Top chamfer with dithering
+        for (var i = 0; i < chamferSize; i++) {
+            var lineY = topY + i;
+            var lineLeftX = leftX + i;
+            var lineRightX = rightX - i;
+            for (var px = lineLeftX; px <= lineRightX; px++) {
+                if (shouldDitherPixel(px, lineY, pattern)) {
+                    dc.drawPoint(px, lineY);
+                }
+            }
+        }
+        
+        // Bottom chamfer with dithering
+        for (var i = 0; i < chamferSize; i++) {
+            var lineY = bottomY - i - 1;
+            var lineLeftX = leftX + i;
+            var lineRightX = rightX - i;
+            for (var px = lineLeftX; px <= lineRightX; px++) {
+                if (shouldDitherPixel(px, lineY, pattern)) {
+                    dc.drawPoint(px, lineY);
+                }
+            }
+        }
+    }
+
+    private function shouldDitherPixel(x as Lang.Number, y as Lang.Number, pattern as Lang.Number) as Lang.Boolean {
+        var ditherPattern = pattern % 3;
+        
+        switch (ditherPattern) {
+            case 0: // Checkerboard
+                return ((x + y) % 3 == 0);
+            case 1: // Diagonal stripes
+                return ((x + y) % 4 == 0);
+            case 2: // Sparse dots
+                return ((x * y) % 5 == 0);
+            default:
+                return ((x + y) % 3 == 0);
+        }
+    }
+
+    private function drawDitheredRect(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, width as Lang.Number, height as Lang.Number, pattern as Lang.Number) as Void {
+        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
+        
+        for (var px = x; px < x + width; px++) {
+            for (var py = y; py < y + height; py++) {
+                if (shouldDitherPixel(px, py, pattern)) {
+                    dc.drawPoint(px, py);
+                }
+            }
+        }
     }
 
     private function calculateSegmentCoords(x as Lang.Number, y as Lang.Number, width as Lang.Number, height as Lang.Number, thickness as Lang.Number, gap as Lang.Number) as Lang.Array<Lang.Array<Lang.Number>> {
@@ -330,20 +480,38 @@ class SevenSegView extends WatchUi.WatchFace {
         } else {
             // Horizontal segment
             dc.fillRectangle(x1, y1 - thickness/2, x2 - x1, thickness);
-        }
+        drawBatteryIndicator(dc);
     }
 
-    private function drawDitheredRect(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, width as Lang.Number, height as Lang.Number) as Void {
-        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
+    private function drawBatteryIndicator(dc as Graphics.Dc) as Void {
+        var centerX = dc.getWidth() / 2;
+        var batteryY = dc.getHeight() - 25;
         
-        // Organic dithering pattern - less orderly but not chaotic
-        for (var px = x; px < x + width; px++) {
-            for (var py = y; py < y + height; py++) {
-                if ((px * 2 + py * 2) % 4 == 0) {
-                    dc.drawPoint(px, py);
-                }
-            }
+        // Battery outline
+        var batteryWidth = 40;
+        var batteryHeight = 16;
+        var batteryX = centerX - batteryWidth / 2;
+        
+        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
+        dc.drawRectangle(batteryX, batteryY, batteryWidth, batteryHeight);
+        
+        // Battery terminal
+        dc.fillRectangle(batteryX + batteryWidth, batteryY + 4, 3, 8);
+        
+        // Battery level - ensure we have a valid value
+        var batteryLevel = _batteryLevel;
+        if (batteryLevel < 0 || batteryLevel > 100) {
+            batteryLevel = 100; // Default to 100% if invalid
         }
+        
+        var fillWidth = (batteryWidth - 2) * batteryLevel / 100;
+        if (fillWidth > 0) {
+            dc.fillRectangle(batteryX + 1, batteryY + 1, fillWidth, batteryHeight - 2);
+        }
+        
+        // Battery percentage text
+        var percentText = batteryLevel.toString() + "%";
+        dc.drawText(centerX, batteryY - 5, Graphics.FONT_TINY, percentText, Graphics.TEXT_JUSTIFY_CENTER);
     }
 
     private function drawColon(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, height as Lang.Number) as Void {
@@ -414,66 +582,67 @@ class SevenSegView extends WatchUi.WatchFace {
     }
 
     private function drawMiniSevenSeg(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, width as Lang.Number, height as Lang.Number, segments as Lang.Array<Lang.Number>) as Void {
-        var thickness = 3; // Same thickness as date digits (width > 20 ? 5 : 3, so 3 for small digits)
-        var gap = 1;
+        var thickness = 3; // Same thickness as date digits
+        var chamferSize = 1; // Smaller chamfer for mini segments
+        var gap = 2; // Increased gap for better separation
         
-        // Calculate segment positions directly
-        var left = x + gap;
-        var right = x + width - gap;
-        var top = y + gap;
-        var bottom = y + height - gap;
+        // Calculate segment positions with chamfering
+        var left = x + gap + chamferSize;
+        var right = x + width - gap - chamferSize;
+        var top = y + gap + chamferSize;
+        var bottom = y + height - gap - chamferSize;
         var midY = y + height / 2;
         
-        // Draw each segment directly with dithering on unlit segments
+        // Draw each segment with chamfering
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
         
         // Segment a (top horizontal)
         if (segments[0] == 1) {
-            dc.fillRectangle(left, top, right - left, thickness);
+            drawChamferedHorizontalSegment(dc, left, right, top - chamferSize, thickness, chamferSize);
         } else {
-            drawDitheredRect(dc, left, top, right - left, thickness);
+            drawDitheredChamferedHorizontalSegment(dc, left, right, top - chamferSize, thickness, chamferSize, 0);
         }
         
         // Segment b (top right vertical)
         if (segments[1] == 1) {
-            dc.fillRectangle(right - thickness, top, thickness, midY - top);
+            drawChamferedVerticalSegment(dc, right, top, midY - chamferSize, thickness, chamferSize);
         } else {
-            drawDitheredRect(dc, right - thickness, top, thickness, midY - top);
+            drawDitheredChamferedVerticalSegment(dc, right, top, midY - chamferSize, thickness, chamferSize, 1);
         }
         
         // Segment c (bottom right vertical)
         if (segments[2] == 1) {
-            dc.fillRectangle(right - thickness, midY, thickness, bottom - midY);
+            drawChamferedVerticalSegment(dc, right, midY + chamferSize, bottom, thickness, chamferSize);
         } else {
-            drawDitheredRect(dc, right - thickness, midY, thickness, bottom - midY);
+            drawDitheredChamferedVerticalSegment(dc, right, midY + chamferSize, bottom, thickness, chamferSize, 2);
         }
         
         // Segment d (bottom horizontal)
         if (segments[3] == 1) {
-            dc.fillRectangle(left, bottom - thickness, right - left, thickness);
+            drawChamferedHorizontalSegment(dc, left, right, bottom, thickness, chamferSize);
         } else {
-            drawDitheredRect(dc, left, bottom - thickness, right - left, thickness);
+            drawDitheredChamferedHorizontalSegment(dc, left, right, bottom, thickness, chamferSize, 3);
         }
         
         // Segment e (bottom left vertical)
         if (segments[4] == 1) {
-            dc.fillRectangle(left, midY, thickness, bottom - midY);
+            drawChamferedVerticalSegment(dc, left - chamferSize, midY + chamferSize, bottom, thickness, chamferSize);
         } else {
-            drawDitheredRect(dc, left, midY, thickness, bottom - midY);
+            drawDitheredChamferedVerticalSegment(dc, left - chamferSize, midY + chamferSize, bottom, thickness, chamferSize, 4);
         }
         
         // Segment f (top left vertical)
         if (segments[5] == 1) {
-            dc.fillRectangle(left, top, thickness, midY - top);
+            drawChamferedVerticalSegment(dc, left - chamferSize, top, midY - chamferSize, thickness, chamferSize);
         } else {
-            drawDitheredRect(dc, left, top, thickness, midY - top);
+            drawDitheredChamferedVerticalSegment(dc, left - chamferSize, top, midY - chamferSize, thickness, chamferSize, 5);
         }
         
         // Segment g (middle horizontal)
         if (segments[6] == 1) {
-            dc.fillRectangle(left, midY - thickness/2, right - left, thickness);
+            drawChamferedHorizontalSegment(dc, left, right, midY, thickness, chamferSize);
         } else {
-            drawDitheredRect(dc, left, midY - thickness/2, right - left, thickness);
+            drawDitheredChamferedHorizontalSegment(dc, left, right, midY, thickness, chamferSize, 6);
         }
     }
 
